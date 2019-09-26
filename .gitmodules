@@ -1,0 +1,3 @@
+[submodule "koloshmet_lib"]
+	path = koloshmet_lib
+	url = https://github.com/koloshmet-hse/koloshmet_lib
