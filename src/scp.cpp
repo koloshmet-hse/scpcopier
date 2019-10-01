@@ -20,7 +20,7 @@ TSubprocess TScp::Upload() const {
         throw TException{"Root ", SourceRoot, " isn't directory"};
     }
 
-    std::vector<std::string> args{"-r"};
+    std::vector<std::string> args{"-rqv"};
     for (auto&& file : Files) {
         auto fullPath = SourceRoot;
         fullPath /= file;
