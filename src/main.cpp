@@ -28,6 +28,8 @@ std::ifstream GetConfig() {
     return std::ifstream{configPath};
 }
 
+using namespace std::literals;
+
 int main(int argc, char* argv[]) {
     TTreeValue configJson;
     try {
@@ -55,9 +57,14 @@ int main(int argc, char* argv[]) {
         }();
 
         std::string curSent;
-        while (std::getline(runningScp.Out(), curSent)) {
-            std::cout << curSent << std::endl;
+        while (std::getline(runningScp.Err(), curSent)) {
+            std::string_view message{curSent};
+            auto pattern = "Sink:"sv;
+            if (message.substr(0, pattern.length()) == pattern) {
+                std::cout << message.substr(pattern.length()) << std::endl;
+            }
         }
+        runningScp.Wait();
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
     }
