@@ -2,12 +2,13 @@
 
 #include <util/tree_value/json_io.h>
 
+#include <util/string/utils.h>
 #include <util/exception/exception.h>
 
 #include <fstream>
 #include <iostream>
 
-std::ifstream GetConfig() {
+std::ifstream GetGlobalConfig() {
     std::filesystem::path configPath(std::getenv("HOME"));
     configPath /= ".scpcopier";
     if (!std::filesystem::exists(configPath)) {
@@ -28,12 +29,26 @@ std::ifstream GetConfig() {
     return std::ifstream{configPath};
 }
 
+std::ifstream GetLocalConfig() {
+    const std::filesystem::path home = std::getenv("HOME");
+    for (auto curPath = std::filesystem::current_path(); curPath != home; curPath = curPath.parent_path()) {
+        auto local = curPath / ".scpcopier";
+        if (std::filesystem::exists(local) && std::filesystem::is_directory(local)) {
+            local /= "config.json";
+            if (std::filesystem::exists(local) && std::filesystem::is_regular_file(local)) {
+                return std::ifstream{local};
+            }
+        }
+    }
+    return GetGlobalConfig();
+}
+
 using namespace std::literals;
 
 int main(int argc, char* argv[]) {
     TTreeValue configJson;
     try {
-        auto config = GetConfig();
+        auto config = GetLocalConfig();
         config >> TJsonIO{configJson};
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
@@ -44,27 +59,16 @@ int main(int argc, char* argv[]) {
         if (argc < 2) {
             throw TException{"Put one argument 'u' - Upload or 'd' - Download"};
         }
-        auto runningScp = [&scp, argv] {
-            std::string arg{argv[1]};
-            if (arg.empty() || (std::tolower(arg.front()) != 'u' && std::tolower(arg.front()) != 'd')) {
-                throw TException{"Put one argument 'u' - Upload or 'd' - Download"};
-            }
-            if (std::tolower(arg.front()) == 'u') {
-                return scp.Upload();
-            } else {
-                return scp.Download();
-            }
-        }();
-
-        std::string curSent;
-        while (std::getline(runningScp.Err(), curSent)) {
-            std::string_view message{curSent};
-            auto pattern = "Sink:"sv;
-            if (message.substr(0, pattern.length()) == pattern) {
-                std::cout << message.substr(pattern.length()) << std::endl;
-            }
+        std::string_view arg{argv[1]};
+        if (arg.empty() || (std::tolower(arg.front()) != 'u' && std::tolower(arg.front()) != 'd')) {
+            throw TException{"Put one argument 'u' - Upload or 'd' - Download"};
         }
-        runningScp.Wait();
+
+        if (std::tolower(arg.front()) == 'u') {
+            scp.Upload(std::cout);
+        } else {
+            scp.Download(std::cout);
+        }
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
     }

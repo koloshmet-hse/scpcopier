@@ -8,11 +8,9 @@ class TScp {
 public:
     explicit TScp(const TTreeValue& config);
 
-    [[nodiscard]]
-    TSubprocess Upload() const;
+    void Upload(std::ostream& out) const;
 
-    [[nodiscard]]
-    TSubprocess Download() const;
+    void Download(std::ostream& out) const;
 
 private:
     const std::filesystem::path Executable;
