@@ -143,6 +143,7 @@ void TScp::Upload(std::ostream& out) const {
     TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
     scp.Execute();
     ProcessResult(out, scp);
+    scp.Wait();
 }
 
 void TScp::Download(std::ostream& out) const {
@@ -171,4 +172,5 @@ void TScp::Download(std::ostream& out) const {
     TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
     scp.Execute();
     ProcessResult(out, scp);
+    scp.Wait();
 }
