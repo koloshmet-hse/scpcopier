@@ -1,0 +1,15 @@
+{
+    "scp_executable": "/usr/bin/scp",
+    "login": "koloshmet",
+    "target_address": "192.168.8.4",
+    "source_root": "/Users/koloshmet/Projects/scpcopier",
+    "target_root": "/home/koloshmet/scpcopier",
+    "vcs": {
+        "path": "/usr/bin/git",
+        "mode": "A"
+    },
+    "prefer_vcs": true,
+    "files": [
+        "CMakeLists.txt"
+    ]
+}
