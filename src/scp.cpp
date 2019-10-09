@@ -35,10 +35,7 @@ TScp::TScp(const TTreeValue& config)
         TVcs vcs{ToString(config["vcs"]["path"]), GetMode(ToString(config["vcs"]["mode"]))};
         
         current_path(SourceRoot);
-        auto root = vcs.Root();
-        while(SourceRoot != root) {
-            SourceRoot = SourceRoot.parent_path();
-        }
+        SourceRoot = vcs.Root();
 
         auto files = vcs.Status();
 
@@ -90,6 +87,7 @@ void ProcessResult(std::ostream& out, TSubprocess& runningScp) {
     for (std::string curSent; getline(runningScp.Err(), curSent);) {
         std::string_view message{curSent};
         auto pattern = "Sink:"sv;
+
         if (message.substr(0, pattern.length()) == pattern) {
             auto mainPart = message.substr(pattern.length() + 1);
             std::vector<std::string_view> parts = Split(mainPart, " ");
