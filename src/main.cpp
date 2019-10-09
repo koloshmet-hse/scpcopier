@@ -11,16 +11,16 @@
 std::ifstream GetGlobalConfig() {
     std::filesystem::path configPath(std::getenv("HOME"));
     configPath /= ".scpcopier";
-    if (!std::filesystem::exists(configPath)) {
-        std::filesystem::create_directory(configPath);
+    if (!exists(configPath)) {
+        create_directory(configPath);
     }
-    if (!std::filesystem::is_directory(configPath)) {
+    if (!is_directory(configPath)) {
         throw TException{
             "You already have ~/.scpcopier and it isn't directory, please move it somewhere else to continue"
         };
     }
     configPath /= "config.json";
-    if (!std::filesystem::exists(configPath) || !std::filesystem::is_regular_file(configPath)) {
+    if (!exists(configPath) || !is_regular_file(configPath)) {
         throw TException{
             "You don't have ~/.scpcopier/config.json or it isn't regular file, please create it to continue"
         };
@@ -33,9 +33,9 @@ std::ifstream GetLocalConfig() {
     const std::filesystem::path home = std::getenv("HOME");
     for (auto curPath = std::filesystem::current_path(); curPath != home; curPath = curPath.parent_path()) {
         auto local = curPath / ".scpcopier";
-        if (std::filesystem::exists(local) && std::filesystem::is_directory(local)) {
+        if (exists(local) && is_directory(local)) {
             local /= "config.json";
-            if (std::filesystem::exists(local) && std::filesystem::is_regular_file(local)) {
+            if (exists(local) && is_regular_file(local)) {
                 return std::ifstream{local};
             }
         }

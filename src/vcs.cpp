@@ -64,3 +64,15 @@ std::vector<std::filesystem::path> TVcs::Status() const {
 
     return res;
 }
+
+std::filesystem::path TVcs::Root() const {
+    const std::filesystem::path home = std::getenv("HOME");
+    for (auto curPath = std::filesystem::current_path(); curPath != home; curPath = curPath.parent_path()) {
+        auto local = curPath / ".";
+        local += VcsPath.filename();
+        if (exists(local) && is_directory(local)) {
+            return curPath;
+        }
+    }
+    throw TException{"Can't find ", VcsPath.filename(), " root"};
+}

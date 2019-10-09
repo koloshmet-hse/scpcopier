@@ -33,6 +33,13 @@ TScp::TScp(const TTreeValue& config)
 
     if (preferVcs) {
         TVcs vcs{ToString(config["vcs"]["path"]), GetMode(ToString(config["vcs"]["mode"]))};
+        
+        current_path(SourceRoot);
+        auto root = vcs.Root();
+        while(SourceRoot != root) {
+            SourceRoot = SourceRoot.parent_path();
+        }
+
         auto files = vcs.Status();
 
         for (auto&& cur : files) {
@@ -80,7 +87,7 @@ void ProcessResult(std::ostream& out, TSubprocess& runningScp) {
     using namespace std::literals;
 
     std::vector<std::string> dirStack;
-    for (std::string curSent; std::getline(runningScp.Err(), curSent);) {
+    for (std::string curSent; getline(runningScp.Err(), curSent);) {
         std::string_view message{curSent};
         auto pattern = "Sink:"sv;
         if (message.substr(0, pattern.length()) == pattern) {
@@ -114,10 +121,10 @@ void ProcessResult(std::ostream& out, TSubprocess& runningScp) {
 }
 
 void TScp::Upload(std::ostream& out) const {
-    if (!std::filesystem::exists(SourceRoot)) {
+    if (!exists(SourceRoot)) {
         throw TException{"Root ", SourceRoot, " doesn't exist"};
     }
-    if (!std::filesystem::is_directory(SourceRoot)) {
+    if (!is_directory(SourceRoot)) {
         throw TException{"Root ", SourceRoot, " isn't directory"};
     }
 
@@ -125,7 +132,7 @@ void TScp::Upload(std::ostream& out) const {
     for (auto&& file : Files) {
         auto fullPath = SourceRoot;
         fullPath /= file;
-        if (!std::filesystem::exists(fullPath)) {
+        if (!exists(fullPath)) {
             throw TException{"File ", fullPath, " doesn't exist"};
         }
         args.push_back(fullPath);
@@ -147,10 +154,10 @@ void TScp::Upload(std::ostream& out) const {
 }
 
 void TScp::Download(std::ostream& out) const {
-    if (!std::filesystem::exists(SourceRoot)) {
+    if (!exists(SourceRoot)) {
         throw TException{"Root ", SourceRoot, " doesn't exist"};
     }
-    if (!std::filesystem::is_directory(SourceRoot)) {
+    if (!is_directory(SourceRoot)) {
         throw TException{"Root ", SourceRoot, " isn't directory"};
     }
 

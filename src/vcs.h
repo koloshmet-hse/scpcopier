@@ -22,6 +22,9 @@ public:
     [[nodiscard]]
     std::vector<std::filesystem::path> Status() const;
 
+    [[nodiscard]]
+    std::filesystem::path Root() const;
+
 private:
     std::filesystem::path VcsPath;
     EVcs Vcs;
