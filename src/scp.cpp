@@ -21,9 +21,18 @@ TScp::TScp(const TTreeValue& config)
     , Files{}
     , Target{ToString(config["target_address"])}
     , Login{ToString(config["login"])}
+    , Root{}
     , SourceRoot{ToString(config["source_root"])}
     , TargetRoot{ToString(config["target_root"])}
 {
+    const std::filesystem::path home = std::getenv("HOME");
+    for (Root = std::filesystem::current_path(); Root != home; Root = Root.parent_path()) {
+        auto local = Root / ".scpcopier";
+        if (exists(local) && is_directory(local)) {
+            break;
+        }
+    }
+
     bool preferVcs = config.Contains("vcs") && !config.Contains("files");
     if (config.Contains("vcs") && config.Contains("files")) {
         if (config.Contains("prefer_vcs")) {
@@ -126,25 +135,7 @@ void TScp::Upload(std::ostream& out) const {
         throw TException{"Root ", SourceRoot, " isn't directory"};
     }
 
-    std::vector<std::string> args{"-rqv"};
-    for (auto&& file : Files) {
-        auto fullPath = SourceRoot;
-        fullPath /= file;
-        if (!exists(fullPath)) {
-            throw TException{"File ", fullPath, " doesn't exist"};
-        }
-        args.push_back(fullPath);
-    }
-
-    std::string target;
-    target += Login;
-    target += '@';
-    target += Target;
-    target += ':';
-    target += TargetRoot;
-
-    args.push_back(std::move(target));
-
+    auto args = UploadParams(Target, SourceRoot, TargetRoot);
     TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
     scp.Execute();
     ProcessResult(out, scp);
@@ -159,23 +150,57 @@ void TScp::Download(std::ostream& out) const {
         throw TException{"Root ", SourceRoot, " isn't directory"};
     }
 
-    std::string target;
-    target += Login;
-    target += '@';
-    target += Target;
-    target += ':';
-
-    std::vector<std::string> args{"-rqv"};
-    for (auto&& file : Files) {
-        auto fullPath = TargetRoot;
-        fullPath /= file;
-        args.push_back(target + fullPath.string());
-    }
-
-    args.push_back(SourceRoot);
-
+    auto args = DownloadParams(Target, TargetRoot, SourceRoot);
     TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
     scp.Execute();
     ProcessResult(out, scp);
     scp.Wait();
+}
+
+std::vector<std::string> TScp::UploadParams(
+    std::string_view to,
+    const std::filesystem::path& fromRoot,
+    const std::filesystem::path& toRoot) const
+{
+    std::vector<std::string> args{"-rqv"};
+    for (auto&& file : Files) {
+        auto fullPath = fromRoot;
+        fullPath /= file;
+        if (!exists(fullPath)) {
+            throw TException{"File ", fullPath, " doesn't exist"};
+        }
+        args.push_back(std::move(fullPath));
+    }
+
+    std::string target;
+    target += Login;
+    target += '@';
+    target += to;
+    target += ':';
+    target += toRoot;
+
+    args.push_back(std::move(target));
+    return args;
+}
+
+std::vector<std::string> TScp::DownloadParams(
+    std::string_view from,
+    const std::filesystem::path& fromRoot,
+    const std::filesystem::path& toRoot) const
+{
+    std::string target;
+    target += Login;
+    target += '@';
+    target += from;
+    target += ':';
+
+    std::vector<std::string> args{"-rqv"};
+    for (auto&& file : Files) {
+        auto fullPath = fromRoot;
+        fullPath /= file;
+        args.push_back(target + fullPath.string());
+    }
+
+    args.push_back(toRoot);
+    return args;
 }
