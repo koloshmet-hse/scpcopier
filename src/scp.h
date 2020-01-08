@@ -12,6 +12,12 @@ public:
 
     void Download(std::ostream& out) const;
 
+    template <typename TIter>
+    void SetFiles(TIter beg, TIter end) {
+        Files.resize(std::distance(beg, end));
+        copy(beg, end, Files.begin());
+    }
+
 private:
     [[nodiscard]]
     std::vector<std::string> UploadParams(

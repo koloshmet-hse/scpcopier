@@ -2,11 +2,12 @@
 
 #include <util/tree_value/json_io.h>
 
+#include <util/opt/options.h>
+
 #include <util/string/utils.h>
 #include <util/exception/exception.h>
 
 #include <fstream>
-#include <iostream>
 
 std::ifstream GetGlobalConfig() {
     std::filesystem::path configPath(std::getenv("HOME"));
@@ -43,31 +44,51 @@ std::ifstream GetLocalConfig() {
     return GetGlobalConfig();
 }
 
+TTreeValue LoadConfig() {
+    TTreeValue res;
+    try {
+        auto config = GetLocalConfig();
+        config >> TJsonIO{res};
+    } catch (const std::exception& exception) {
+        std::cerr << exception.what() << std::endl;
+        std::exit(1);
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        std::exit(1);
+    }
+    return res;
+}
+
 using namespace std::literals;
 
 int main(int argc, char* argv[]) {
-    TTreeValue configJson;
-    try {
-        auto config = GetLocalConfig();
-        config >> TJsonIO{configJson};
-    } catch (const std::exception& exception) {
-        std::cerr << exception.what() << std::endl;
-    }
+    TOptions options{
+        argc, argv,
+        TParamList<>{},
+        TDefaultParam<std::string_view>{"relative_path"},
+        TOpt<bool>{"u", "Uploads files to server. Never use with -d"},
+        TOpt<bool>{"d", "Downloads files from server. Never use with -u"}
+    };
 
     try {
-        TScp scp{configJson};
-        if (argc < 2) {
-            throw TException{"Put one argument 'u' - Upload or 'd' - Download"};
-        }
-        std::string_view arg{argv[1]};
-        if (arg.empty() || (std::tolower(arg.front()) != 'u' && std::tolower(arg.front()) != 'd')) {
-            throw TException{"Put one argument 'u' - Upload or 'd' - Download"};
-        }
+        TScp scp{LoadConfig()};
+        if (options.Get<bool>("u") ^ options.Get<bool>("d")) {
+            std::vector<std::string> files;
+            files.reserve(options.Size() - 1);
+            for (std::size_t param = 1; param < options.Size(); ++param) {
+                files.emplace_back(options.Get<std::string_view>(param));
+            }
+            if (!files.empty()) {
+                scp.SetFiles(std::move_iterator{files.begin()}, std::move_iterator{files.end()});
+            }
 
-        if (std::tolower(arg.front()) == 'u') {
-            scp.Upload(std::cout);
+            if (options.Get<bool>("u")) {
+                scp.Upload(std::cout);
+            } else {
+                scp.Download(std::cout);
+            }
         } else {
-            scp.Download(std::cout);
+            throw TException{"Put one argument '-u' or '-d', for more information use --help"};
         }
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
