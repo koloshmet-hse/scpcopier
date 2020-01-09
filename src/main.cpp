@@ -4,7 +4,6 @@
 
 #include <util/opt/options.h>
 
-#include <util/string/utils.h>
 #include <util/exception/exception.h>
 
 #include <fstream>
