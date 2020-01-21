@@ -63,31 +63,36 @@ using namespace std::literals;
 int main(int argc, char* argv[]) {
     TOptions options{
         argc, argv,
-        TParamList<>{},
-        TDefaultParam<std::string_view>{"relative_path"},
-        TOpt<bool>{"u", "Uploads files to server. Never use with -d"},
-        TOpt<bool>{"d", "Downloads files from server. Never use with -u"}
+        {
+            TCommand{
+                "upload", "Uploads files to server",
+                TParamList<>{},
+                TDefaultParam<std::string_view>{"relative_path"},
+            },
+            TCommand{
+                "download", "Downloads files from server",
+                TParamList<>{},
+                TDefaultParam<std::string_view>{"relative_path"},
+            }
+        }
     };
 
     try {
         TScp scp{LoadConfig()};
-        if (options.Get<bool>("u") ^ options.Get<bool>("d")) {
+        if (options.GetCommand() == "upload" || options.GetCommand() == "download") {
             std::vector<std::string> files;
-            files.reserve(options.Size() - 1);
-            for (std::size_t param = 1; param < options.Size(); ++param) {
+            files.reserve(options.Size());
+            for (std::size_t param = 0; param < options.Size(); ++param) {
                 files.emplace_back(options.Get<std::string_view>(param));
             }
             if (!files.empty()) {
                 scp.SetFiles(std::move_iterator{files.begin()}, std::move_iterator{files.end()});
             }
-
-            if (options.Get<bool>("u")) {
-                scp.Upload(std::cout);
-            } else {
-                scp.Download(std::cout);
-            }
-        } else {
-            throw TException{"Put one argument '-u' or '-d', for more information use --help"};
+        }
+        if (options.GetCommand() == "upload") {
+            scp.Upload(std::cout);
+        } else if (options.GetCommand() == "download") {
+            scp.Download(std::cout);
         }
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
