@@ -8,45 +8,44 @@
 
 #include <fstream>
 
-std::ifstream GetGlobalConfig() {
+std::filesystem::path GetGlobalConfig() {
     std::filesystem::path configPath(std::getenv("HOME"));
     configPath /= ".scpcopier";
     if (!exists(configPath)) {
         create_directory(configPath);
     }
     if (!is_directory(configPath)) {
-        throw TException{
-            "You already have ~/.scpcopier and it isn't directory, please move it somewhere else to continue"
-        };
+        return {};
     }
     configPath /= "config.json";
     if (!exists(configPath) || !is_regular_file(configPath)) {
-        throw TException{
-            "You don't have ~/.scpcopier/config.json or it isn't regular file, please create it to continue"
-        };
+        return {};
     }
 
-    return std::ifstream{configPath};
+    return configPath;
 }
 
-std::ifstream GetLocalConfig() {
+std::filesystem::path GetConfig() {
     const std::filesystem::path home = std::getenv("HOME");
     for (auto curPath = std::filesystem::current_path(); curPath != home; curPath = curPath.parent_path()) {
         auto local = curPath / ".scpcopier";
         if (exists(local) && is_directory(local)) {
             local /= "config.json";
             if (exists(local) && is_regular_file(local)) {
-                return std::ifstream{local};
+                return local;
             }
+        }
+        if (curPath == curPath.root_path()) {
+            return {};
         }
     }
     return GetGlobalConfig();
 }
 
-TTreeValue LoadConfig() {
+TTreeValue LoadConfig(const std::filesystem::path& configPath) {
     TTreeValue res;
     try {
-        auto config = GetLocalConfig();
+        std::ifstream config{configPath};
         config >> TJsonIO{res};
     } catch (const std::exception& exception) {
         std::cerr << exception.what() << std::endl;
@@ -61,6 +60,8 @@ TTreeValue LoadConfig() {
 using namespace std::literals;
 
 int main(int argc, char* argv[]) {
+    auto configPath = GetConfig().string();
+
     TOptions options{
         argc, argv,
         {
@@ -68,17 +69,19 @@ int main(int argc, char* argv[]) {
                 "upload", "Uploads files to server",
                 TParamList<>{},
                 TDefaultParam<std::string_view>{"relative_path"},
+                TOpt<std::string_view>{"config", "Absolute path to config", configPath}
             },
             TCommand{
                 "download", "Downloads files from server",
                 TParamList<>{},
                 TDefaultParam<std::string_view>{"relative_path"},
+                TOpt<std::string_view>{"config", "Absolute path to config", configPath}
             }
         }
     };
 
     try {
-        TScp scp{LoadConfig()};
+        TScp scp{LoadConfig(options.Get<std::string_view>("config"))};
         if (options.GetCommand() == "upload" || options.GetCommand() == "download") {
             std::vector<std::string> files;
             files.reserve(options.Size());
