@@ -21,18 +21,9 @@ TScp::TScp(const TTreeValue& config)
     , Files{}
     , Target{ToString(config["target_address"])}
     , Login{ToString(config["login"])}
-    , Root{}
     , SourceRoot{ToString(config["source_root"])}
     , TargetRoot{ToString(config["target_root"])}
 {
-    const std::filesystem::path home = std::getenv("HOME");
-    for (Root = std::filesystem::current_path(); Root != home; Root = Root.parent_path()) {
-        auto local = Root / ".scpcopier";
-        if (exists(local) && is_directory(local)) {
-            break;
-        }
-    }
-
     bool preferVcs = config.Contains("vcs") && !config.Contains("files");
     if (config.Contains("vcs") && config.Contains("files")) {
         if (config.Contains("prefer_vcs")) {

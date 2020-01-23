@@ -36,7 +36,6 @@ private:
     std::vector<std::string> Files;
     std::string Target;
     std::string Login;
-    std::filesystem::path Root;
     std::filesystem::path SourceRoot;
     std::filesystem::path TargetRoot;
 };
