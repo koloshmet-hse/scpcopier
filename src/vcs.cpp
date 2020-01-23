@@ -73,6 +73,9 @@ std::filesystem::path TVcs::Root() const {
         if (exists(local) && is_directory(local)) {
             return curPath;
         }
+        if (curPath == curPath.root_path()) {
+            break;
+        }
     }
     throw TException{"Can't find ", VcsPath.filename(), " root"};
 }
