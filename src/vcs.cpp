@@ -26,7 +26,6 @@ std::vector<std::filesystem::path> TVcs::Status() const {
                 throw TException{VcsPath.filename(), " status not supported"};
         }
     }();
-    vcs.Execute();
     vcs.Wait();
 
     std::vector<std::filesystem::path> res;

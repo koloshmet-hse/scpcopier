@@ -9,5 +9,5 @@ set(
 add_library(scp ${SOURCES})
 
 target_include_directories(scp PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(scp lib_posix)
-add_dependencies(scp lib_posix)
+target_link_libraries(scp k_posix)
+add_dependencies(scp k_posix)

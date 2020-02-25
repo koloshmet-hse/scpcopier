@@ -32,7 +32,7 @@ private:
         const std::filesystem::path& toRoot) const;
 
 private:
-    const std::filesystem::path Executable;
+    std::filesystem::path Executable;
     std::vector<std::string> Files;
     std::string Target;
     std::string Login;

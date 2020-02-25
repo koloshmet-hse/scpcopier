@@ -129,9 +129,12 @@ void TScp::Upload(std::ostream& out) const {
     }
 
     auto args = UploadParams(Target, SourceRoot, TargetRoot);
-    TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
-    scp.AddEnv(SSH_AUTH, std::getenv(SSH_AUTH));
-    scp.Execute();
+    std::vector<std::string> envs{TEnvVar(SSH_AUTH)};
+    TSubprocess scp{
+        Executable, 
+        std::move_iterator{args.begin()}, std::move_iterator{args.end()},
+        std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
+    };
     ProcessResult(out, scp);
     scp.Wait();
 }
@@ -145,9 +148,12 @@ void TScp::Download(std::ostream& out) const {
     }
 
     auto args = DownloadParams(Target, TargetRoot, SourceRoot);
-    TSubprocess scp{Executable, std::move_iterator{args.begin()}, std::move_iterator{args.end()}};
-    scp.AddEnv(SSH_AUTH, std::getenv(SSH_AUTH));
-    scp.Execute();
+    std::vector<std::string> envs{TEnvVar(SSH_AUTH)};
+    TSubprocess scp{
+            Executable,
+            std::move_iterator{args.begin()}, std::move_iterator{args.end()},
+            std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
+    };
     ProcessResult(out, scp);
     scp.Wait();
 }
