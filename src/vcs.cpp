@@ -26,7 +26,12 @@ std::vector<std::filesystem::path> TVcs::Status() const {
                 throw TException{VcsPath.filename(), " status not supported"};
         }
     }();
-    vcs.Wait();
+    switch (vcs.Wait()) {
+        case TSubprocess::EExitCode::Ok:
+            break;
+        default:
+            throw TException{"Unsuccessful finish of vcs"};
+    }
 
     std::vector<std::filesystem::path> res;
     for (std::string cur; getline(vcs.Out(), cur);) {

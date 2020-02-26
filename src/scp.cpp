@@ -131,12 +131,17 @@ void TScp::Upload(std::ostream& out) const {
     auto args = UploadParams(Target, SourceRoot, TargetRoot);
     std::vector<std::string> envs{TEnvVar(SSH_AUTH)};
     TSubprocess scp{
-        Executable, 
+        Executable,
         std::move_iterator{args.begin()}, std::move_iterator{args.end()},
         std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
     };
     ProcessResult(out, scp);
-    scp.Wait();
+    switch (scp.Wait()) {
+        case TSubprocess::EExitCode::Ok:
+            break;
+        default:
+            throw TException{"Unsuccessful finish of scp"};
+    }
 }
 
 void TScp::Download(std::ostream& out) const {
@@ -155,7 +160,12 @@ void TScp::Download(std::ostream& out) const {
             std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
     };
     ProcessResult(out, scp);
-    scp.Wait();
+    switch (scp.Wait()) {
+        case TSubprocess::EExitCode::Ok:
+            break;
+        default:
+            throw TException{"Unsuccessful finish of scp"};
+    }
 }
 
 std::vector<std::string> TScp::UploadParams(
