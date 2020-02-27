@@ -8,6 +8,17 @@
 
 #include <fstream>
 
+std::string GetInfo(std::string_view configPath) {
+    std::string res;
+    res += "Version: ";
+    #ifdef SCPCOPIER_VERSION
+    res += SCPCOPIER_VERSION;
+    #endif
+    res += "\nConfig Path: ";
+    res += configPath;
+    return res;
+}
+
 std::filesystem::path GetGlobalConfig() {
     std::filesystem::path configPath(std::getenv("HOME"));
     configPath /= ".scpcopier";
@@ -36,7 +47,7 @@ std::filesystem::path GetConfig() {
             }
         }
         if (curPath == curPath.root_path()) {
-            return {};
+            break;
         }
     }
     return GetGlobalConfig();
@@ -76,12 +87,22 @@ int main(int argc, char* argv[]) {
                 TParamList<>{},
                 TDefaultParam<std::string_view>{"relative_path"},
                 TOpt<std::string_view>{"config", "Absolute path to config", configPath}
+            },
+            TCommand{
+                "info", "Shows scpcopier's info",
+                TParamList<>{}
             }
         }
     };
 
+    if (options.GetCommand() == "info") {
+        std::cout << GetInfo(configPath) << std::endl;
+        return 0;
+    }
+
     try {
         TScp scp{LoadConfig(options.Get<std::string_view>("config"))};
+
         if (options.GetCommand() == "upload" || options.GetCommand() == "download") {
             std::vector<std::string> files;
             files.reserve(options.Size());
@@ -92,6 +113,7 @@ int main(int argc, char* argv[]) {
                 scp.SetFiles(std::move_iterator{files.begin()}, std::move_iterator{files.end()});
             }
         }
+
         if (options.GetCommand() == "upload") {
             scp.Upload(std::cout);
         } else if (options.GetCommand() == "download") {
