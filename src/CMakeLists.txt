@@ -4,6 +4,8 @@ set(
     SOURCES
     scp.cpp
     vcs.cpp
+    config.cpp
+    options.cpp
 )
 
 add_library(scp ${SOURCES})
