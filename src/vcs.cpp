@@ -50,12 +50,15 @@ std::vector<std::filesystem::path> TVcs::Status() const {
                         if (status.front() == ' ' || status.front() == '?') {
                             break;
                         }
+                        [[fallthrough]];
                     case EMode::Modified:
                         if (status.back() == '?') {
                             break;
                         }
+                        [[fallthrough]];
                     case EMode::All:
                         res.emplace_back(file);
+                        [[fallthrough]];
                     default:
                         break;
                 }

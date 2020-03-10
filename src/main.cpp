@@ -7,9 +7,7 @@
 std::string GetInfo(std::string_view configPath) {
     std::string res;
     res += "Version: ";
-    #ifdef SCPCOPIER_VERSION
     res += SCPCOPIER_VERSION;
-    #endif
     res += "\nConfig Path: ";
     res += configPath;
     return res;
