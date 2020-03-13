@@ -1,23 +1,11 @@
-#include <scp.h>
-#include <config.h>
-#include <options.h>
+#include "commands.h"
+#include "config.h"
 
 #include <util/opt/options.h>
-
-std::string GetInfo(std::string_view configPath) {
-    std::string res;
-    res += "Version: ";
-    res += SCPCOPIER_VERSION;
-    res += "\nConfig Path: ";
-    res += configPath;
-    return res;
-}
 
 using namespace std::literals;
 
 int main(int argc, char* argv[]) {
-    auto configPath = GetConfig().string();
-
     TOptions options{
         argc, argv,
         {
@@ -25,43 +13,35 @@ int main(int argc, char* argv[]) {
                 "upload", "Uploads files to server",
                 TParamList<>{},
                 TDefaultParam<std::string_view>{"relative_path"},
-                TOpt<std::string_view>{"config", "Absolute path to config", configPath}
+                TOpt<std::string_view>{"config", "Absolute path to config", ConfigStr()}
             },
             TCommand{
                 "download", "Downloads files from server",
                 TParamList<>{},
                 TDefaultParam<std::string_view>{"relative_path"},
-                TOpt<std::string_view>{"config", "Absolute path to config", configPath}
+                TOpt<std::string_view>{"config", "Absolute path to config", ConfigStr()}
             },
             TCommand{
-                "info", "Shows scpcopier's info",
+                "info", "Shows scpcopier info",
                 TParamList<>{}
+            },
+            TCommand{
+                "init", "Initializes scpcopier config",
+                TParamList<>{},
+                TOpt<bool>{"empty", "Generate empty config"},
+                TOpt<std::string_view>{"config", "Absolute path to config", ConfigStr()}
             }
         }
     };
 
     if (options.GetCommand() == "info") {
-        std::cout << GetInfo(configPath) << std::endl;
-        return 0;
-    }
-
-    try {
-        TScp scp{LoadConfig(options.Get<std::string_view>("config"))};
-
-        if (options.GetCommand() == "upload" || options.GetCommand() == "download") {
-            auto files = ParamArr(options);
-            if (!files.empty()) {
-                scp.SetFiles(std::move_iterator{files.begin()}, std::move_iterator{files.end()});
-            }
-        }
-
-        if (options.GetCommand() == "upload") {
-            scp.Upload(std::cout);
-        } else if (options.GetCommand() == "download") {
-            scp.Download(std::cout);
-        }
-    } catch (const std::exception& exception) {
-        std::cerr << exception.what() << std::endl;
+        Info(options);
+    } else if (options.GetCommand() == "init") {
+        Init(options);
+    } else if (options.GetCommand() == "download") {
+        Download(options);
+    } else if (options.GetCommand() == "upload") {
+        Upload(options);
     }
 
     return 0;

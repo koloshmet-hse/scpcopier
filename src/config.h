@@ -3,9 +3,11 @@
 #include <util/tree_value/json_io.h>
 
 #include <filesystem>
-#include <iostream>
-#include <fstream>
 
-std::filesystem::path GetConfig();
+const std::filesystem::path& Config();
+
+const std::string& ConfigStr();
 
 TTreeValue LoadConfig(const std::filesystem::path& configPath);
+
+TTreeValue& EmptyConfig();

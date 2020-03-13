@@ -7,14 +7,16 @@ elseif (CMAKE_BUILD_TYPE MATCHES Release)
     add_compile_options(-O3)
 endif()
 
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d")
 add_compile_definitions(SCPCOPIER_VERSION="${PROJECT_VERSION}")
+add_compile_definitions(SCPCOPIER_BUILD_DATE="${BUILD_DATE}")
 
 set(
     SOURCES
     scp.cpp
     vcs.cpp
     config.cpp
-    options.cpp
+    commands.cpp
 )
 
 add_library(scp ${SOURCES})
