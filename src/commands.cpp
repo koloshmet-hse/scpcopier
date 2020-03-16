@@ -42,7 +42,7 @@ void Init(const TOptions& opts) try {
         path = std::filesystem::current_path();
         create_directory(path /= ".scpcopier");
         std::ofstream config{path /= "config.json"};
-        config << TJsonIO{EmptyConfig()} << std::flush;
+        config << TJsonIO{EmptyConfig(), true} << std::flush;
     }
 } catch (const std::exception& exception) {
     std::cerr << exception.what() << std::endl;
