@@ -33,7 +33,7 @@ TScp::TScp(const TTreeValue& config)
 
     if (preferVcs) {
         TVcs vcs{ToString(config["vcs"]["path"]), GetMode(ToString(config["vcs"]["mode"]))};
-        
+
         current_path(SourceRoot);
         SourceRoot = vcs.Root();
 
@@ -131,7 +131,7 @@ void TScp::Upload(std::ostream& out) const {
     auto args = UploadParams(Target, SourceRoot, TargetRoot);
     std::vector<std::string> envs{TEnvVar(SSH_AUTH)};
     TSubprocess scp{
-        Executable,
+        Executable, TSubprocess::ECommunicationMode::Err,
         std::move_iterator{args.begin()}, std::move_iterator{args.end()},
         std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
     };
@@ -155,7 +155,7 @@ void TScp::Download(std::ostream& out) const {
     auto args = DownloadParams(Target, TargetRoot, SourceRoot);
     std::vector<std::string> envs{TEnvVar(SSH_AUTH)};
     TSubprocess scp{
-        Executable,
+        Executable, TSubprocess::ECommunicationMode::Err,
         std::move_iterator{args.begin()}, std::move_iterator{args.end()},
         std::move_iterator{envs.begin()}, std::move_iterator{envs.end()}
     };

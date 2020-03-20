@@ -21,7 +21,12 @@ std::vector<std::filesystem::path> TVcs::Status() const {
     TSubprocess vcs = [this] {
         switch (Vcs) {
             case EVcs::Git:
-                return TSubprocess{VcsPath, "status", "--porcelain"};
+                using EMode = TSubprocess::ECommunicationMode;
+                return TSubprocess{
+                    VcsPath,
+                    EMode::Out,
+                    "status", "--porcelain"
+                };
             default:
                 throw TException{VcsPath.filename(), " status not supported"};
         }
